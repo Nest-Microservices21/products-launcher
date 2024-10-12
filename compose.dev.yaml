@@ -10,86 +10,109 @@ services:
     networks:
       - backend-network
 
-  # ---------------------------
-  # Client Gateway Service
-  # ---------------------------
-  client-gateway:
-    build:
-      context: ./client-gateway
-      dockerfile: Dockerfile
-      target: final-dev
-    ports:
-      - "${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}"
-    environment:
-      - PORT=${CLIENT_GATEWAY_PORT}
-      - NATS_SERVERS=${NATS_SERVER}
-    networks:
-      - backend-network
-    volumes:
-      - ./client-gateway/src:/usr/src/app/src 
+  # # ---------------------------
+  # # Client Gateway Service
+  # # ---------------------------
+  # client-gateway:
+  #   build:
+  #     context: ./client-gateway
+  #     dockerfile: Dockerfile
+  #     target: final-dev
+  #   ports:
+  #     - "${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}"
+  #   environment:
+  #     - PORT=${CLIENT_GATEWAY_PORT}
+  #     - NATS_SERVERS=${NATS_SERVER}
+  #   networks:
+  #     - backend-network
+  #   volumes:
+  #     - ./client-gateway/src:/usr/src/app/src 
 
-  # ---------------------------
-  # Product Services
-  # ---------------------------
-  product-services:
-    build:
-      context: ./product-ms
-      dockerfile: Dockerfile
-      target: final-dev
-    volumes:
-      - ./product-ms/src:/usr/src/app/src
-    environment:
-      - PORT=${PRODUCT_SERVICES_PORT}
-      - NATS_SERVERS=${NATS_SERVER}
-      - DATABASE_URL=sqlite.db
-    networks:
-      - backend-network
-    depends_on:
-      - nats-server
+  # # ---------------------------
+  # # Product Services
+  # # ---------------------------
+  # product-services:
+  #   build:
+  #     context: ./product-ms
+  #     dockerfile: Dockerfile
+  #     target: final-dev
+  #   volumes:
+  #     - ./product-ms/src:/usr/src/app/src
+  #   environment:
+  #     - PORT=${PRODUCT_SERVICES_PORT}
+  #     - NATS_SERVERS=${NATS_SERVER}
+  #     - DATABASE_URL=sqlite.db
+  #   networks:
+  #     - backend-network
+  #   depends_on:
+  #     - nats-server
    
 
-  # ---------------------------
-  # Orders Database Service (PostgreSQL)
-  # ---------------------------
-  orders-db:
-    container_name: orders-database
-    image: postgres:16.4-alpine3.20
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - orders-ms_db-data:/var/lib/postgresql/data
-    ports:
-      - "${ORDERS_DB_PORT}:${ORDERS_DB_PORT}"
-    networks:
-      - backend-network
+  # # ---------------------------
+  # # Orders Database Service (PostgreSQL)
+  # # ---------------------------
+  # orders-db:
+  #   container_name: orders-database
+  #   image: postgres:16.4-alpine3.20
+  #   restart: always
+  #   environment:
+  #     - POSTGRES_USER=${POSTGRES_USER}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - POSTGRES_DB=${POSTGRES_DB}
+  #   volumes:
+  #     - orders-ms_db-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "${ORDERS_DB_PORT}:${ORDERS_DB_PORT}"
+  #   networks:
+  #     - backend-network
 
+  # # ---------------------------
+  # # Orders Microservice (PostgreSQL)
+  # # ---------------------------
+  # orders-service:
+  #   container_name: orders-microservice
+  #   # restart: always
+  #   build:
+  #     context: ./orders-ms
+  #     dockerfile: Dockerfile
+  #     target: final-dev
+  #   ports:
+  #     - "${ORDERS_SERVICE_PORT}:${ORDERS_SERVICE_PORT}"
+  #   environment:
+  #     - DATABASE_URL=${POSTGRES_URL}
+  #     - NATS_SERVERS=${NATS_SERVER}
+  #     - PORT=3002
+  #   depends_on:
+  #     - orders-db
+  #     - nats-server
+  #   networks:
+  #     - backend-network
+  #   volumes:
+  #     - ./orders-ms/src:/usr/src/app/src         
   # ---------------------------
-  # Orders Microservice (PostgreSQL)
+  # Payment Microservice 
   # ---------------------------
-  orders-service:
-    container_name: orders-microservice
-    # restart: always
+  payment-service:
+    container_name: payment-microservice
     build:
-      context: ./orders-ms
+      context: ./payment-ms
       dockerfile: Dockerfile
-      target: final-dev
+      target: dev-final
+    volumes:
+      - ./payment-ms/src:/usr/src/app/src 
     ports:
-      - "${ORDERS_SERVICE_PORT}:${ORDERS_SERVICE_PORT}"
-    environment:
-      - DATABASE_URL=${POSTGRES_URL}
-      - NATS_SERVERS=${NATS_SERVER}
-      - PORT=3002
+      - "${PAYMENT_SERVICE_PORT}:${PAYMENT_SERVICE_PORT}"
     depends_on:
-      - orders-db
       - nats-server
     networks:
       - backend-network
-    volumes:
-      - ./orders-ms/src:/usr/src/app/src         
-
+    environment:
+    - PORT=${PAYMENT_SERVICE_PORT}
+    - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+    - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+    - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    - BASE_URL=${BASE_URL}
+    - NATS_SERVERS=${NATS_SERVER}
 volumes:
   orders-ms_db-data:
     external: true

@@ -113,6 +113,28 @@ services:
     - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     - BASE_URL=${BASE_URL}
     - NATS_SERVERS=${NATS_SERVER}
+  # ---------------------------
+  # AUTH  Microservice 
+  # ---------------------------
+  auth-service:
+    container_name: auth-microservice
+    build:
+      context: ./auth-ms
+      dockerfile: Dockerfile
+      target: final-dev
+    volumes:
+      - ./auth-ms/src:/usr/src/app/src 
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+    depends_on:
+      - nats-server
+    networks:
+      - backend-network
+    environment:
+    - PORT=${AUTH_SERVICE_PORT}
+    - NATS_SERVERS=${NATS_SERVER}
+    - QDJR0w6XL8DMyyf1
+    - fabrisio021
 volumes:
   orders-ms_db-data:
     external: true

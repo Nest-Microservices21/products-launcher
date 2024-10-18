@@ -23,6 +23,8 @@ services:
     environment:
       - PORT=${CLIENT_GATEWAY_PORT}
       - NATS_SERVERS=${NATS_SERVER}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     networks:
       - backend-network
     volumes:
@@ -133,8 +135,9 @@ services:
     environment:
     - PORT=${AUTH_SERVICE_PORT}
     - NATS_SERVERS=${NATS_SERVER}
-    - QDJR0w6XL8DMyyf1
-    - fabrisio021
+    - JWT_SECRET=${JWT_SECRET}
+    - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    - MONGODB_URL=${MONGO_DATABASE_URL}
 volumes:
   orders-ms_db-data:
     external: true
